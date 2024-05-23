@@ -1,8 +1,3 @@
-# TODO: Finalize player movement. (DONE)
-# TODO: Add background with animation. (DONE)
-# TODO: Create the enemy logic. (DONE)
-# TODO: Create the bullet logic (both player and enemy). (DONE)
-# TODO: Create health and shield system.
 # TODO: Implement a healthbar system which follows a sprite?
 # TODO: Implement a healthbar indicator on the top left, and shield indicator on the top right.
 # TODO: Create a simple main menu? (https://youtu.be/2iyx8_elcYg?si=RjqQtYt5eEmDjyrb)
@@ -11,36 +6,57 @@
 # TODO: Release...
 
 import pygame
-from config import window, clock
+import random
+from config import *
+from constants import *
 from sprites import *
-from constants import FPS
 
 
 class Game:
+    def __init__(self, window, clock):
+        self.window = window
+        self.clock = clock
+
     def draw_and_update_groups(self, *groups):
         for group in groups:
-            group.draw(window)
+            if not hasattr(group, "draw") and not hasattr(group, "update"):
+                raise Exception("Not a valid group!")
+            group.draw(self.window)
             group.update()
 
     def run(self):
+        pygame.time.set_timer(ENEMY_SPAWN_EVENT, ENEMY_SPAWN_COOLDOWN)
+
+        # Groups.
         background_group = pygame.sprite.GroupSingle()
         player_group = pygame.sprite.GroupSingle()
         enemy_group = pygame.sprite.Group()
-        player_bullet_group = pygame.sprite.Group()
         enemy_bullet_group = pygame.sprite.Group()
+        player_bullet_group = pygame.sprite.Group()
+
+        # Sprites.
         Background(background_group)
-        player_sprite = Player(player_bullet_group, enemy_group, player_group)
-        Enemy((0, 0), enemy_bullet_group, player_sprite, "red", enemy_group)
+        Player(player_bullet_group, enemy_group, player_group)
+
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        player_sprite.fire()
-
-            window.fill("black")
+                if event.type == ENEMY_SPAWN_EVENT:
+                    random_x_pos = random.randint(0, WINDOW_WIDTH - ENEMY_SIZE[0])
+                    random_enemy_type = random.choice(ENEMY_TYPES)
+                    Enemy(
+                        (random_x_pos, -ENEMY_SIZE[1]),
+                        enemy_bullet_group,
+                        player_group.sprite,
+                        random_enemy_type,
+                        enemy_group,
+                    )
+                if event.type == ENEMY_PASSING_EVENT:
+                    # TODO: Implemeny enemy passing event.
+                    ...
+            self.window.fill("black")
             self.draw_and_update_groups(
                 background_group,
                 player_group,
@@ -49,11 +65,11 @@ class Game:
                 enemy_bullet_group,
             )
             pygame.display.flip()
-            clock.tick(FPS)
+            self.clock.tick(FPS)
         pygame.quit()
         quit(0)
 
 
 if __name__ == "__main__":
-    game = Game()
+    game = Game(window, clock)
     game.run()

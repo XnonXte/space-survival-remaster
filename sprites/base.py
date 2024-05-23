@@ -20,13 +20,21 @@ class AnimatedEntity(Entity):
 
     def _handle_animation(self):
         self.animation_index += ANIMATION_SPEED
-        if self.animation_index >= len(self.spritesheet):
+        if (
+            self.spritesheet != self.last_frame_spritesheet
+            or self.animation_index >= len(self.spritesheet)
+        ):
             self.animation_index = 0
         self.image = self.spritesheet[int(self.animation_index)]
         self.last_frame_spritesheet = self.spritesheet
 
+    def _update_rect_and_mask(self):
+        self.rect = self.image.get_rect(topleft=self.rect.topleft)
+        self.mask = pygame.mask.from_surface(self.image)
+
     def update(self):
         self._handle_animation()
+        self._update_rect_and_mask()
 
 
 class MoveableAnimatedEntity(AnimatedEntity):
@@ -66,4 +74,5 @@ class MoveableAnimatedEntity(AnimatedEntity):
         self.rect.center += self.direction * self.vel
 
     def update(self):
+        super().update()
         self._handle_movement()

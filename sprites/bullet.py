@@ -2,7 +2,13 @@ import pygame
 from os import path
 from . import base
 from utils import load_spritesheet, rotate_spritesheet
-from constants import PLAYER_BULLET_VEL, ENEMY_BULLET_VEL, WINDOW_HEIGHT
+from constants import (
+    PLAYER_BULLET_VEL,
+    ENEMY_BULLET_VEL,
+    WINDOW_HEIGHT,
+    PLAYER_BULLET_DAMAGE,
+    ENEMY_BULLET_DAMAGE,
+)
 
 
 class PlayerBullet(base.AnimatedEntity):
@@ -11,7 +17,7 @@ class PlayerBullet(base.AnimatedEntity):
     )
 
     def __init__(self, pos, enemy_group, group):
-        super().__init__(self.BULLET_SPRITESHEET, group, center=pos)
+        super().__init__(self.BULLET_SPRITESHEET, group, midbottom=pos)
         self.enemy_group = enemy_group
 
     def _handle_movement(self):
@@ -20,9 +26,9 @@ class PlayerBullet(base.AnimatedEntity):
             self.kill()
 
     def _handle_enemy_impact(self):
-        for enemy in self.enemy_group:
-            if pygame.sprite.collide_mask(self, enemy):
-                enemy.kill()
+        for enemy_sprite in self.enemy_group:
+            if pygame.sprite.collide_mask(self, enemy_sprite):
+                enemy_sprite.damage()
                 self.kill()
 
     def update(self):
@@ -37,7 +43,7 @@ class EnemyBullet(base.AnimatedEntity):
     )
 
     def __init__(self, pos, player_sprite, group):
-        super().__init__(self.ENEMY_BULLET_SPRITESHEET, group, center=pos)
+        super().__init__(self.ENEMY_BULLET_SPRITESHEET, group, midtop=pos)
         self.player_sprite = player_sprite
 
     def _handle_movement(self):
