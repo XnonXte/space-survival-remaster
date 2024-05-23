@@ -1,4 +1,5 @@
 import pygame
+
 from constants import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_CAPTION
 
 pygame.init()

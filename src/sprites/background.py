@@ -1,11 +1,12 @@
-from . import base
 from os import path
+
+from sprites.bases import animated_entities
 from utils import load_spritesheet
 
 
-class Background(base.AnimatedEntity):
+class Background(animated_entities.AnimatedEntity):
     BACKGROUND_SPRITESHEET = load_spritesheet(
-        path.join("assets", "graphics", "background")
+        path.join("src", "assets", "graphics", "background")
     )
 
     def __init__(self, group):

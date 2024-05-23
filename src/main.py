@@ -1,12 +1,13 @@
-# TODO: Implement a healthbar system which follows a sprite?
 # TODO: Implement a healthbar indicator on the top left, and shield indicator on the top right.
+# TODO: Add heart-drop and shield-drop?
+# TODO: Create simple UI for: bullets, score, wave, etc.
+# TODO: Create a wave system which uses the game's tick.
 # TODO: Create a simple main menu? (https://youtu.be/2iyx8_elcYg?si=RjqQtYt5eEmDjyrb)
 # TODO: Store score in a JSON file.
-# TODO: Maybe at this point get a history system where you can see your past play?
-# TODO: Release...
 
 import pygame
 import random
+
 from config import *
 from constants import *
 from sprites import *
@@ -26,18 +27,13 @@ class Game:
 
     def run(self):
         pygame.time.set_timer(ENEMY_SPAWN_EVENT, ENEMY_SPAWN_COOLDOWN)
-
-        # Groups.
         background_group = pygame.sprite.GroupSingle()
-        player_group = pygame.sprite.GroupSingle()
+        player_group = pygame.sprite.Group()
         enemy_group = pygame.sprite.Group()
         enemy_bullet_group = pygame.sprite.Group()
         player_bullet_group = pygame.sprite.Group()
-
-        # Sprites.
         Background(background_group)
-        Player(player_bullet_group, enemy_group, player_group)
-
+        player_sprite = Player(player_bullet_group, enemy_group, player_group)
         running = True
         while running:
             for event in pygame.event.get():
@@ -49,7 +45,7 @@ class Game:
                     Enemy(
                         (random_x_pos, -ENEMY_SIZE[1]),
                         enemy_bullet_group,
-                        player_group.sprite,
+                        player_sprite,
                         random_enemy_type,
                         enemy_group,
                     )

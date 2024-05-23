@@ -1,6 +1,8 @@
 import pygame
 from os import path
-from . import base, bullet
+
+from sprites.bases import movable_animated_entities
+from sprites.bullet import PlayerBullet
 from utils import load_spritesheet
 from constants import (
     WINDOW_WIDTH,
@@ -8,36 +10,41 @@ from constants import (
     PLAYER_SIZE,
     PLAYER_VEL,
     PLAYER_MAX_HEALTH,
+    ENEMY_MAX_HEALTH,
+    ENEMY_COLLISION_DAMAGE,
     ANIMATION_SPEED,
 )
 
 
-class Player(base.MoveableAnimatedEntity):
+class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
     IDLING_SPRITESHEET = load_spritesheet(
-        path.join("assets", "graphics", "player", "idling")
+        path.join("src", "assets", "graphics", "player", "idling")
     )
     FIRING_SPRITESHEET = load_spritesheet(
-        path.join("assets", "graphics", "player", "firing")
+        path.join("src", "assets", "graphics", "player", "firing")
     )
     MOVING_SPRITESHEET = load_spritesheet(
-        path.join("assets", "graphics", "player", "moving")
+        path.join("src", "assets", "graphics", "player", "moving")
     )
 
     def __init__(self, player_bullet_group, enemy_group, group):
-        super().__init__(
-            PLAYER_VEL,
-            self.IDLING_SPRITESHEET,
-            group,
-            center=(
-                WINDOW_WIDTH // 2,
-                WINDOW_HEIGHT - PLAYER_SIZE[0],
-            ),
-        )
-        self.health = PLAYER_MAX_HEALTH
         self.firing = False
         self.firing_frame_time = 0
         self.player_bullet_group = player_bullet_group
         self.enemy_group = enemy_group
+
+        #! The callback is temporary!
+        super().__init__(
+            PLAYER_VEL,
+            self.IDLING_SPRITESHEET,
+            PLAYER_MAX_HEALTH,
+            PLAYER_MAX_HEALTH,
+            group,
+            lambda: None,
+            "green",
+            "bottom",
+            center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - PLAYER_SIZE[0]),
+        )
 
     def _handle_animation_state(self):
         if self.firing:
@@ -53,11 +60,10 @@ class Player(base.MoveableAnimatedEntity):
             self._handle_firing()
 
     def _handle_firing(self):
-        if not self.firing:
-            bullet.PlayerBullet(
-                self.rect.midtop, self.enemy_group, self.player_bullet_group
-            )
-            self.firing = True
+        if self.firing:
+            return
+        PlayerBullet(self.rect.midtop, self.enemy_group, self.player_bullet_group)
+        self.firing = True
 
     def _handle_firing_state(self):
         if self.firing:
@@ -66,13 +72,18 @@ class Player(base.MoveableAnimatedEntity):
                 self.firing = False
                 self.firing_frame_time = 0
 
-    def damage(self):
-        self.health -= 1
-        if self.health <= 0:
-            self.kill()
+    def _handle_enemy_collision(self):
+        for enemy_sprite in self.enemy_group:
+            if (
+                pygame.sprite.collide_mask(self, enemy_sprite)
+                and enemy_sprite.__class__.__name__ == "Enemy"
+            ):
+                enemy_sprite.update_health(-ENEMY_MAX_HEALTH)
+                self.update_health(-ENEMY_COLLISION_DAMAGE)
 
     def update(self):
         super().update()
         self._handle_firing_click()
         self._handle_firing_state()
         self._handle_animation_state()
+        self._handle_enemy_collision()
