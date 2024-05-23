@@ -48,7 +48,9 @@ class Enemy(animated_entities.AnimatedLivingEntity):
 
     def _handle_firing(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_firing_time > ENEMY_BULLET_COOLDOWN:
+
+        # Mechanism to have a constant firing speed of ENEMY_BULLET_COOLDOWN.
+        if current_time - self.last_firing_time >= ENEMY_BULLET_COOLDOWN:
             self.firing = True
             EnemyBullet(
                 self.rect.midbottom, self.player_sprite, self.enemy_bullet_group

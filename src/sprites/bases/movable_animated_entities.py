@@ -32,9 +32,14 @@ class MoveableAnimatedEntity(AnimatedEntity):
 
     def _handle_movement(self):
         keys = pygame.key.get_pressed()
+
+        # Handling x and y movements, also check if the entity is inside the boundary.
         self._handle_y_movement(keys)
         self._handle_x_movement(keys)
+
+        # Normal diagonal speed.
         self._normalize_vector()
+
         self._apply_movement()
 
     def _apply_movement(self):
@@ -93,9 +98,14 @@ class MoveableAnimatedLivingEntity(AnimatedLivingEntity):
 
     def _handle_movement(self):
         keys = pygame.key.get_pressed()
+
+        # Handling x and y movements, also check if the entity is inside the boundary.
         self._handle_y_movement(keys)
         self._handle_x_movement(keys)
+
+        # Normal diagonal speed.
         self._normalize_vector()
+
         self._apply_movement()
 
     def _apply_movement(self):

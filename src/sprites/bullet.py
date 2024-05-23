@@ -27,6 +27,7 @@ class PlayerBullet(animated_entities.AnimatedEntity):
 
     def _handle_enemy_impact(self):
         for enemy_sprite in self.enemy_group:
+            # Since we put the health-bar of enemy into the same group, we need to check if the name the class is "Enemy".
             if (
                 pygame.sprite.collide_mask(self, enemy_sprite)
                 and enemy_sprite.__class__.__name__ == "Enemy"

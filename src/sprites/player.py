@@ -60,8 +60,10 @@ class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
             self._handle_firing()
 
     def _handle_firing(self):
+        # If still firing, ignore input.
         if self.firing:
             return
+
         PlayerBullet(self.rect.midtop, self.enemy_group, self.player_bullet_group)
         self.firing = True
 
@@ -74,6 +76,7 @@ class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
 
     def _handle_enemy_collision(self):
         for enemy_sprite in self.enemy_group:
+            # Since we put the health-bar of enemy into the same group, we need to check if the name the class is "Enemy".
             if (
                 pygame.sprite.collide_mask(self, enemy_sprite)
                 and enemy_sprite.__class__.__name__ == "Enemy"

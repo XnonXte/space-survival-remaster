@@ -19,6 +19,8 @@ class HealthBar(pygame.sprite.Sprite):
         self.health_bar_width = self.parent_sprite.rect.width
         self.health_bar_height = self.health_bar_width // 10
         self.image = pygame.Surface((self.health_bar_width, self.health_bar_height))
+
+        # Determining which side should the health-bar take place.
         match self.health_bar_pos:
             case "bottom":
                 self.rect = self.image.get_rect(

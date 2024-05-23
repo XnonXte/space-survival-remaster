@@ -20,20 +20,28 @@ class Game:
 
     def draw_and_update_groups(self, *groups):
         for group in groups:
+            # Better be safe than sorry.
             if not hasattr(group, "draw") and not hasattr(group, "update"):
                 raise Exception("Not a valid group!")
+
             group.draw(self.window)
             group.update()
 
     def run(self):
         pygame.time.set_timer(ENEMY_SPAWN_EVENT, ENEMY_SPAWN_COOLDOWN)
+
+        # Groups.
         background_group = pygame.sprite.GroupSingle()
         player_group = pygame.sprite.Group()
         enemy_group = pygame.sprite.Group()
         enemy_bullet_group = pygame.sprite.Group()
         player_bullet_group = pygame.sprite.Group()
+
+        # Sprites.
         Background(background_group)
         player_sprite = Player(player_bullet_group, enemy_group, player_group)
+
+        # Game loop.
         running = True
         while running:
             for event in pygame.event.get():
@@ -62,6 +70,8 @@ class Game:
             )
             pygame.display.flip()
             self.clock.tick(FPS)
+
+        # Cleanup after game quit.
         pygame.quit()
         quit(0)
 
