@@ -1,21 +1,27 @@
 import pygame
+import random
 from os import path
 
-from sprites.bases import animated_entities
+from sprites.bases import animated_entity
 from sprites.bullet import EnemyBullet
+from sprites.drop import Drop
 from utils import load_spritesheet, rotate_spritesheet
 from constants import (
+    DROP_TYPE,
     WINDOW_HEIGHT,
     ENEMY_VEL,
     ENEMY_BULLET_COOLDOWN,
     ENEMY_PASSING_EVENT,
     ENEMY_MAX_HEALTH,
     ANIMATION_SPEED,
+    DROP_CHANCE,
 )
 
 
-class Enemy(animated_entities.AnimatedLivingEntity):
-    def __init__(self, pos, enemy_bullet_group, player_sprite, enemy_type, group):
+class Enemy(animated_entity.AnimatedLivingEntity):
+    def __init__(
+        self, pos, enemy_bullet_group, drop_group, player_sprite, enemy_type, group
+    ):
         if enemy_type not in ["black", "blue", "green", "red", "red_longwing"]:
             raise Exception("Not a valid enemy type!")
         self.moving_spritesheet = rotate_spritesheet(
@@ -35,12 +41,12 @@ class Enemy(animated_entities.AnimatedLivingEntity):
         self.firing_frame_time = 0
         self.player_sprite = player_sprite
         self.enemy_bullet_group = enemy_bullet_group
+        self.drop_group = drop_group
         super().__init__(
             self.moving_spritesheet,
             ENEMY_MAX_HEALTH,
             ENEMY_MAX_HEALTH,
             group,
-            lambda: None,
             "green",
             "top",
             topleft=pos,
@@ -77,9 +83,21 @@ class Enemy(animated_entities.AnimatedLivingEntity):
                 self.firing = False
                 self.firing_frame_time = 0
 
+    def _handle_dying(self):
+        if self.health_bar.current_health <= 0:
+            drop_chance = random.randint(1, 100)
+            random_drop = random.choice(DROP_TYPE)
+            if drop_chance <= DROP_CHANCE:
+                Drop(
+                    self.rect.topleft, random_drop, self.player_sprite, self.drop_group
+                )
+            self.health_bar.kill()
+            self.kill()
+
     def update(self):
         super().update()
         self._handle_movement()
         self._handle_firing()
         self._handle_animation_state()
         self._handle_firing_state()
+        self._handle_dying()

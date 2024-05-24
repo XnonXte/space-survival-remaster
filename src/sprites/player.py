@@ -1,7 +1,8 @@
+from sys import _current_frames
 import pygame
 from os import path
 
-from sprites.bases import movable_animated_entities
+from sprites.bases import movable_animated_entity
 from sprites.bullet import PlayerBullet
 from utils import load_spritesheet
 from constants import (
@@ -10,13 +11,15 @@ from constants import (
     PLAYER_SIZE,
     PLAYER_VEL,
     PLAYER_MAX_HEALTH,
+    PLAYER_MAX_SHIELD,
     ENEMY_MAX_HEALTH,
     ENEMY_COLLISION_DAMAGE,
     ANIMATION_SPEED,
+    GAME_OVER_EVENT,
 )
 
 
-class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
+class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
     IDLING_SPRITESHEET = load_spritesheet(
         path.join("src", "assets", "graphics", "player", "idling")
     )
@@ -32,6 +35,7 @@ class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
         self.firing_frame_time = 0
         self.player_bullet_group = player_bullet_group
         self.enemy_group = enemy_group
+        self.current_shield = PLAYER_MAX_SHIELD
 
         #! The callback is temporary!
         super().__init__(
@@ -40,7 +44,6 @@ class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
             PLAYER_MAX_HEALTH,
             PLAYER_MAX_HEALTH,
             group,
-            lambda: None,
             "green",
             "bottom",
             center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - PLAYER_SIZE[0]),
@@ -84,9 +87,23 @@ class Player(movable_animated_entities.MoveableAnimatedLivingEntity):
                 enemy_sprite.update_health(-ENEMY_MAX_HEALTH)
                 self.update_health(-ENEMY_COLLISION_DAMAGE)
 
+    def _handle_dying(self):
+        if self.health_bar.current_health <= 0:
+            pygame.event.post(pygame.event.Event(GAME_OVER_EVENT))
+            self.health_bar.kill()
+            self.kill()
+
+    def update_shield(self, amount):
+        self.current_shield += amount
+        if self.current_shield <= 0:
+            pygame.event.post(pygame.event.Event(GAME_OVER_EVENT))
+        if self.current_shield >= PLAYER_MAX_SHIELD:
+            self.current_shield = PLAYER_MAX_SHIELD
+
     def update(self):
         super().update()
         self._handle_firing_click()
         self._handle_firing_state()
         self._handle_animation_state()
         self._handle_enemy_collision()
+        self._handle_dying()

@@ -7,18 +7,24 @@ FPS = 75
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 800
 
+# Sizes.
+PLAYER_SIZE = (64, 64)
+ENEMY_SIZE = (64, 64)
+DROP_SIZE = (64, 64)
+
 # Misc.
 WINDOW_CAPTION = "Spaceships Remaster"
-ANIMATION_SPEED = 0.15
+ANIMATION_SPEED = 0.1
 
-# Gameplay.
-PLAYER_SIZE = (64, 64)
+# Player properties.
 PLAYER_VEL = 4
 PLAYER_BULLET_VEL = 5
 PLAYER_BULLET_DAMAGE = 1
-PLAYER_MAX_HEALTH = 10
-PLAYER_SHIELD = 5
-ENEMY_SIZE = (64, 64)
+PLAYER_MAX_HEALTH = 5
+PLAYER_MAX_SHIELD = 3
+
+# Enemy properties.
+ENEMY_TYPES = ["black", "blue", "green", "red", "red_longwing"]
 ENEMY_VEL = 1
 ENEMY_BULLET_VEL = 2
 ENEMY_BULLET_DAMAGE = 1
@@ -26,6 +32,13 @@ ENEMY_COLLISION_DAMAGE = 2
 ENEMY_MAX_HEALTH = 3
 ENEMY_BULLET_COOLDOWN = 4000
 ENEMY_SPAWN_COOLDOWN = 2000
+
+# Events.
 ENEMY_SPAWN_EVENT = pygame.USEREVENT + 1
 ENEMY_PASSING_EVENT = pygame.USEREVENT + 2
-ENEMY_TYPES = ["black", "blue", "green", "red", "red_longwing"]
+GAME_OVER_EVENT = pygame.USEREVENT + 3
+
+# Drop properties.
+DROP_TIMEOUT = 4000
+DROP_TYPE = ["heart", "shield"]
+DROP_CHANCE = 10  # 10% drop change.

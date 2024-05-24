@@ -1,16 +1,28 @@
-# TODO: Implement a healthbar indicator on the top left, and shield indicator on the top right.
-# TODO: Add heart-drop and shield-drop?
-# TODO: Create simple UI for: bullets, score, wave, etc.
+# TODO: Create simple UI for: score, wave, etc.
 # TODO: Create a wave system which uses the game's tick.
 # TODO: Create a simple main menu? (https://youtu.be/2iyx8_elcYg?si=RjqQtYt5eEmDjyrb)
 # TODO: Store score in a JSON file.
 
 import pygame
 import random
+from os import path
 
-from config import *
-from constants import *
-from sprites import *
+from config import window, clock
+from sprites.background import Background
+from sprites.player import Player
+from sprites.enemy import Enemy
+from sprites.bases.entity import Entity
+from constants import (
+    ENEMY_SPAWN_EVENT,
+    ENEMY_SPAWN_COOLDOWN,
+    WINDOW_WIDTH,
+    ENEMY_TYPES,
+    ENEMY_SIZE,
+    ENEMY_PASSING_EVENT,
+    GAME_OVER_EVENT,
+    FPS,
+    DROP_SIZE,
+)
 
 
 class Game:
@@ -18,12 +30,32 @@ class Game:
         self.window = window
         self.clock = clock
 
-    def draw_and_update_groups(self, *groups):
-        for group in groups:
-            # Better be safe than sorry.
-            if not hasattr(group, "draw") and not hasattr(group, "update"):
-                raise Exception("Not a valid group!")
+    def _draw_shield_count(self, current_shield, shield_group):
+        for entity_sprite in shield_group:
+            entity_sprite.kill()
+        for i in range(current_shield):
+            Entity(
+                pygame.image.load(
+                    path.join("src", "assets", "graphics", "static", "shield.png")
+                ).convert_alpha(),
+                shield_group,
+                topleft=(WINDOW_WIDTH - DROP_SIZE[0] - i * DROP_SIZE[0], 0),
+            )
 
+    def _draw_health_count(self, current_health, health_group):
+        for entity_sprite in health_group:
+            entity_sprite.kill()
+        for i in range(current_health):
+            Entity(
+                pygame.image.load(
+                    path.join("src", "assets", "graphics", "static", "heart.png")
+                ).convert_alpha(),
+                health_group,
+                topleft=(i * DROP_SIZE[0], 0),
+            )
+
+    def _draw_and_update_groups(self, *groups):
+        for group in groups:
             group.draw(self.window)
             group.update()
 
@@ -36,12 +68,14 @@ class Game:
         enemy_group = pygame.sprite.Group()
         enemy_bullet_group = pygame.sprite.Group()
         player_bullet_group = pygame.sprite.Group()
+        health_group = pygame.sprite.Group()
+        shield_group = pygame.sprite.Group()
+        drop_group = pygame.sprite.Group()
 
         # Sprites.
         Background(background_group)
         player_sprite = Player(player_bullet_group, enemy_group, player_group)
 
-        # Game loop.
         running = True
         while running:
             for event in pygame.event.get():
@@ -53,20 +87,31 @@ class Game:
                     Enemy(
                         (random_x_pos, -ENEMY_SIZE[1]),
                         enemy_bullet_group,
+                        drop_group,
                         player_sprite,
                         random_enemy_type,
                         enemy_group,
                     )
                 if event.type == ENEMY_PASSING_EVENT:
-                    # TODO: Implemeny enemy passing event.
-                    ...
+                    player_sprite.update_shield(-1)
+                if event.type == GAME_OVER_EVENT:
+                    #! Temporary.
+                    running = False
+
             self.window.fill("black")
-            self.draw_and_update_groups(
+            self._draw_health_count(
+                player_sprite.health_bar.current_health, health_group
+            )
+            self._draw_shield_count(player_sprite.current_shield, shield_group)
+            self._draw_and_update_groups(
                 background_group,
                 player_group,
                 enemy_group,
                 player_bullet_group,
                 enemy_bullet_group,
+                health_group,
+                shield_group,
+                drop_group,
             )
             pygame.display.flip()
             self.clock.tick(FPS)

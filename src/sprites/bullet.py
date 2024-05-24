@@ -1,6 +1,6 @@
 import pygame
 from os import path
-from sprites.bases import animated_entities
+from sprites.bases import animated_entity
 from utils import load_spritesheet, rotate_spritesheet
 from constants import (
     PLAYER_BULLET_VEL,
@@ -11,7 +11,7 @@ from constants import (
 )
 
 
-class PlayerBullet(animated_entities.AnimatedEntity):
+class PlayerBullet(animated_entity.AnimatedEntity):
     BULLET_SPRITESHEET = load_spritesheet(
         path.join("src", "assets", "graphics", "bullets", "player")
     )
@@ -41,7 +41,7 @@ class PlayerBullet(animated_entities.AnimatedEntity):
         self._handle_enemy_impact()
 
 
-class EnemyBullet(animated_entities.AnimatedEntity):
+class EnemyBullet(animated_entity.AnimatedEntity):
     ENEMY_BULLET_SPRITESHEET = rotate_spritesheet(
         load_spritesheet(path.join("src", "assets", "graphics", "bullets", "enemy")),
         180,

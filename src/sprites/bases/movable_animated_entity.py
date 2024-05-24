@@ -1,6 +1,6 @@
 import pygame
 
-from .animated_entities import AnimatedEntity, AnimatedLivingEntity
+from .animated_entity import AnimatedEntity, AnimatedLivingEntity
 from constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
@@ -58,7 +58,6 @@ class MoveableAnimatedLivingEntity(AnimatedLivingEntity):
         max_health,
         current_health,
         group,
-        dying_callback,
         health_bar_color,
         health_bar_pos,
         **rect_kwargs,
@@ -70,7 +69,6 @@ class MoveableAnimatedLivingEntity(AnimatedLivingEntity):
             max_health,
             current_health,
             group,
-            dying_callback,
             health_bar_color,
             health_bar_pos,
             **rect_kwargs,
