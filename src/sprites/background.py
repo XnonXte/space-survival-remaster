@@ -1,5 +1,4 @@
 from os import path
-
 from sprites.bases import animated_entity
 from utils import load_spritesheet
 

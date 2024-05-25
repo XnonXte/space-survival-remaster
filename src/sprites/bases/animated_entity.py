@@ -1,8 +1,6 @@
 import pygame
-
-from .entity import Entity
-from .living_entity import LivingEntity
-from constants import ANIMATION_SPEED
+from .entity import Entity, LivingEntity
+from config import ANIMATION_SPEED
 
 
 class AnimatedEntity(Entity):

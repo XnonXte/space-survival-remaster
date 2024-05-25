@@ -1,13 +1,15 @@
-import pygame
 from os import path
+import pygame
 from sprites.bases import animated_entity
 from utils import load_spritesheet, rotate_spritesheet
-from constants import (
+from config import (
     PLAYER_BULLET_VEL,
     ENEMY_BULLET_VEL,
     WINDOW_HEIGHT,
     PLAYER_BULLET_DAMAGE,
     ENEMY_BULLET_DAMAGE,
+    HIT_MARK_SFX,
+    PLAYER_INVISIBILITY_HIT_COUNTDOWN,
 )
 
 
@@ -27,11 +29,12 @@ class PlayerBullet(animated_entity.AnimatedEntity):
 
     def _handle_enemy_impact(self):
         for enemy_sprite in self.enemy_group:
-            # Since we put the health-bar of enemy into the same group, we need to check if the name the class is "Enemy".
+            # Since we put the health-bar of enemy into the same group, we need to check if the name of the class is "Enemy".
             if (
                 pygame.sprite.collide_mask(self, enemy_sprite)
                 and enemy_sprite.__class__.__name__ == "Enemy"
             ):
+                HIT_MARK_SFX.play()
                 enemy_sprite.update_health(-PLAYER_BULLET_DAMAGE)
                 self.kill()
 
@@ -57,7 +60,13 @@ class EnemyBullet(animated_entity.AnimatedEntity):
             self.kill()
 
     def _handle_player_impact(self):
+        if self.player_sprite.invisibility_countdown > 0:
+            return
         if pygame.sprite.collide_mask(self, self.player_sprite):
+            HIT_MARK_SFX.play()
+            self.player_sprite.invisibility_countdown = (
+                PLAYER_INVISIBILITY_HIT_COUNTDOWN
+            )
             self.player_sprite.update_health(-ENEMY_BULLET_DAMAGE)
             self.kill()
 

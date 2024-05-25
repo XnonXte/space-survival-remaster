@@ -1,8 +1,7 @@
-import pygame
 from os import path
-
+import pygame
 from sprites.bases import animated_entity
-from constants import DROP_TIMEOUT, DROP_TYPE
+from config import DROP_TIMEOUT, DROP_TYPE, HEART_DROP_SFX, SHIELD_DROP_SFX
 from utils import load_spritesheet
 
 
@@ -21,9 +20,11 @@ class Drop(animated_entity.AnimatedEntity):
         self.player_sprite = player_sprite
         self.created_time = pygame.time.get_ticks()
         super().__init__(
-            self.HEART_SPRITESHEET
-            if self.drop_type == "heart"
-            else self.SHIELD_SPRITESHEET,
+            (
+                self.HEART_SPRITESHEET
+                if self.drop_type == "heart"
+                else self.SHIELD_SPRITESHEET
+            ),
             group,
             topleft=pos,
         )
@@ -31,8 +32,10 @@ class Drop(animated_entity.AnimatedEntity):
     def _handle_player_collision(self):
         if pygame.sprite.collide_mask(self, self.player_sprite):
             if self.drop_type == "heart":
+                HEART_DROP_SFX.play()
                 self.player_sprite.update_health(1)
             else:
+                SHIELD_DROP_SFX.play()
                 self.player_sprite.update_shield(1)
             self.kill()
 

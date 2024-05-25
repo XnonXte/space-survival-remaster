@@ -1,7 +1,6 @@
 import pygame
-
 from .animated_entity import AnimatedEntity, AnimatedLivingEntity
-from constants import WINDOW_WIDTH, WINDOW_HEIGHT
+from config import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
 class MoveableAnimatedEntity(AnimatedEntity):

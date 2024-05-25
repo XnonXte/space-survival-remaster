@@ -1,12 +1,11 @@
-import pygame
 import random
 from os import path
-
+import pygame
 from sprites.bases import animated_entity
 from sprites.bullet import EnemyBullet
 from sprites.drop import Drop
 from utils import load_spritesheet, rotate_spritesheet
-from constants import (
+from config import (
     DROP_TYPE,
     WINDOW_HEIGHT,
     ENEMY_VEL,
@@ -15,6 +14,9 @@ from constants import (
     ENEMY_MAX_HEALTH,
     ANIMATION_SPEED,
     DROP_CHANCE,
+    EXPLODE_SFX,
+    ENEMY_GUN_SHOT_SFX,
+    ENEMY_KILLED_EVENT,
 )
 
 
@@ -57,6 +59,7 @@ class Enemy(animated_entity.AnimatedLivingEntity):
 
         # Mechanism to have a constant firing speed of ENEMY_BULLET_COOLDOWN.
         if current_time - self.last_firing_time >= ENEMY_BULLET_COOLDOWN:
+            ENEMY_GUN_SHOT_SFX.play()
             self.firing = True
             EnemyBullet(
                 self.rect.midbottom, self.player_sprite, self.enemy_bullet_group
@@ -85,6 +88,8 @@ class Enemy(animated_entity.AnimatedLivingEntity):
 
     def _handle_dying(self):
         if self.health_bar.current_health <= 0:
+            pygame.event.post(pygame.event.Event(ENEMY_KILLED_EVENT))
+            EXPLODE_SFX.play()
             drop_chance = random.randint(1, 100)
             random_drop = random.choice(DROP_TYPE)
             if drop_chance <= DROP_CHANCE:
