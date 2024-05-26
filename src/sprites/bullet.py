@@ -23,13 +23,15 @@ class PlayerBullet(animated_entity.AnimatedEntity):
         super().__init__(self.BULLET_SPRITESHEET, group, midbottom=pos)
 
     def _handle_movement(self):
+        """Handle the movement of the bullet."""
         self.rect.y -= PLAYER_BULLET_VEL
         if self.rect.bottom <= 0:
             self.kill()
 
     def _handle_enemy_impact(self):
+        """Handle the bullet's impact with enemies."""
         for enemy_sprite in self.enemy_group:
-            # Since we put the health-bar of enemy into the same group, we need to check if the name of the class is "Enemy".
+            # Check if the bullet collides with an enemy.
             if (
                 pygame.sprite.collide_mask(self, enemy_sprite)
                 and enemy_sprite.__class__.__name__ == "Enemy"
@@ -39,6 +41,7 @@ class PlayerBullet(animated_entity.AnimatedEntity):
                 self.kill()
 
     def update(self):
+        """Update the bullet's state."""
         super().update()
         self._handle_movement()
         self._handle_enemy_impact()
@@ -55,11 +58,13 @@ class EnemyBullet(animated_entity.AnimatedEntity):
         super().__init__(self.ENEMY_BULLET_SPRITESHEET, group, midtop=pos)
 
     def _handle_movement(self):
+        """Handle the movement of the bullet."""
         self.rect.y += ENEMY_BULLET_VEL
         if self.rect.top >= WINDOW_HEIGHT:
             self.kill()
 
     def _handle_player_impact(self):
+        """Handle the bullet's impact with the player."""
         if self.player_sprite.invisibility_countdown > 0:
             return
         if pygame.sprite.collide_mask(self, self.player_sprite):
@@ -71,6 +76,7 @@ class EnemyBullet(animated_entity.AnimatedEntity):
             self.kill()
 
     def update(self):
+        """Update the bullet's state."""
         super().update()
         self._handle_movement()
         self._handle_player_impact()

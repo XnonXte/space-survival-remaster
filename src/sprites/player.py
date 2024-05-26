@@ -20,6 +20,8 @@ from config import (
     ALPHA_MAX,
     ALPHA_TRANSPARENT,
     PLAYER_INVISIBILITY_ENEMY_COLLISION_COUNTDOWN,
+    PLAYER_FIRE_ANIMATION_SPEED_INCREMENT,
+    PLAYER_VEL_INCREMENT,
 )
 
 
@@ -42,7 +44,6 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
         self.current_shield = PLAYER_MAX_SHIELD
         self.invisibility_countdown = 0
 
-        #! The callback is temporary!
         super().__init__(
             PLAYER_VEL,
             self.IDLING_SPRITESHEET,
@@ -55,6 +56,7 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
         )
 
     def _handle_animation_state(self):
+        """Update the spritesheet based on the player's current state."""
         if self.firing:
             self.spritesheet = self.FIRING_SPRITESHEET
         elif self.direction.x != 0 or self.direction.y != 0:
@@ -63,20 +65,21 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
             self.spritesheet = self.IDLING_SPRITESHEET
 
     def _handle_firing_click(self):
+        """Handle the firing action when the space key is pressed."""
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             self._handle_firing()
 
     def _handle_firing(self):
-        # If still firing, ignore input.
+        """Fire a bullet if not already firing."""
         if self.firing:
             return
-
         PLAYER_GUN_SHOT_SFX.play()
         PlayerBullet(self.rect.midtop, self.enemy_group, self.player_bullet_group)
         self.firing = True
 
     def _handle_firing_state(self):
+        """Manage the firing state and frame timing."""
         if self.firing:
             self.firing_frame_time += ANIMATION_SPEED
             if self.firing_frame_time >= len(self.spritesheet):
@@ -84,10 +87,10 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
                 self.firing_frame_time = 0
 
     def _handle_enemy_collision(self):
+        """Handle collision with enemies, applying damage and triggering invisibility frames."""
         if self.invisibility_countdown > 0:
             return
         for enemy_sprite in self.enemy_group:
-            # Since we put the health-bar of enemy into the same group, we need to check if the name the class is "Enemy".
             if (
                 pygame.sprite.collide_mask(self, enemy_sprite)
                 and enemy_sprite.__class__.__name__ == "Enemy"
@@ -99,6 +102,7 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
                 self.update_health(-ENEMY_COLLISION_DAMAGE)
 
     def _handle_dying(self):
+        """Handle the player's death."""
         if self.health_bar.current_health <= 0:
             EXPLODE_SFX.play()
             pygame.event.post(pygame.event.Event(GAME_OVER_EVENT))
@@ -106,14 +110,15 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
             self.kill()
 
     def _handle_invisibility_frames(self):
-        """Handling enemy flash when hit."""
+        """Manage the player's invisibility frames."""
         if self.invisibility_countdown > 0:
-            if self.invisibility_countdown % FLASH_STEP_FRAME == 0:
-                for sprite in self.spritesheet:
-                    sprite.set_alpha(ALPHA_MAX)
-            else:
-                for sprite in self.spritesheet:
-                    sprite.set_alpha(ALPHA_TRANSPARENT)
+            alpha_value = (
+                ALPHA_TRANSPARENT
+                if self.invisibility_countdown % FLASH_STEP_FRAME
+                else ALPHA_MAX
+            )
+            for sprite in self.spritesheet:
+                sprite.set_alpha(alpha_value)
             self.invisibility_countdown -= 1
         else:
             for sprite in self.spritesheet:
@@ -121,13 +126,24 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
                     sprite.set_alpha(ALPHA_MAX)
 
     def update_shield(self, amount):
+        """Update the player's shield."""
         self.current_shield += amount
         if self.current_shield <= 0:
             pygame.event.post(pygame.event.Event(GAME_OVER_EVENT))
-        if self.current_shield >= PLAYER_MAX_SHIELD:
-            self.current_shield = PLAYER_MAX_SHIELD
+        self.current_shield = min(self.current_shield, PLAYER_MAX_SHIELD)
+
+    def update_stats(self, game_wave):
+        """Update the player's stats based on the current game wave."""
+        self.change_vel(PLAYER_VEL + PLAYER_VEL_INCREMENT * game_wave)
+        if self.firing:
+            self.change_animation_speed(
+                ANIMATION_SPEED + PLAYER_FIRE_ANIMATION_SPEED_INCREMENT * game_wave
+            )
+        else:
+            self.change_animation_speed(ANIMATION_SPEED)
 
     def update(self):
+        """Update the player's state each frame."""
         super().update()
         self._handle_firing_click()
         self._handle_firing_state()

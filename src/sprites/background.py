@@ -12,4 +12,5 @@ class Background(animated_entity.AnimatedEntity):
         super().__init__(self.BACKGROUND_SPRITESHEET, group, topleft=(0, 0))
 
     def update(self):
+        """Update the background's state."""
         super().update()

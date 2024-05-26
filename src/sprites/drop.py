@@ -15,21 +15,17 @@ class Drop(animated_entity.AnimatedEntity):
 
     def __init__(self, pos, drop_type, player_sprite, group):
         if drop_type not in DROP_TYPE:
-            raise Exception("Invalid drop-type!")
+            raise ValueError(f"'{drop_type}' is not a valid drop type!")
         self.drop_type = drop_type
         self.player_sprite = player_sprite
         self.created_time = pygame.time.get_ticks()
-        super().__init__(
-            (
-                self.HEART_SPRITESHEET
-                if self.drop_type == "heart"
-                else self.SHIELD_SPRITESHEET
-            ),
-            group,
-            topleft=pos,
+        spritesheet = (
+            self.HEART_SPRITESHEET if drop_type == "heart" else self.SHIELD_SPRITESHEET
         )
+        super().__init__(spritesheet, group, topleft=pos)
 
     def _handle_player_collision(self):
+        """Handle collision with the player sprite."""
         if pygame.sprite.collide_mask(self, self.player_sprite):
             if self.drop_type == "heart":
                 HEART_DROP_SFX.play()
@@ -40,11 +36,12 @@ class Drop(animated_entity.AnimatedEntity):
             self.kill()
 
     def _handle_timeout(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.created_time >= DROP_TIMEOUT:
+        """Remove the drop after a certain timeout period."""
+        if pygame.time.get_ticks() - self.created_time >= DROP_TIMEOUT:
             self.kill()
 
     def update(self):
+        """Update the drop's state."""
         super().update()
         self._handle_player_collision()
         self._handle_timeout()
