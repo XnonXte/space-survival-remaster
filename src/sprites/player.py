@@ -4,6 +4,7 @@ from sprites.bases import movable_animated_entity
 from sprites.bullet import PlayerBullet
 from utils import load_spritesheet
 from config import (
+    PLAYER_BULLET_VEL,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     PLAYER_SIZE,
@@ -18,6 +19,7 @@ from config import (
     PLAYER_GUN_SHOT_SFX,
     FLASH_STEP_FRAME,
     ALPHA_MAX,
+    ALPHA_INTERMEDIATE,
     ALPHA_TRANSPARENT,
     PLAYER_INVISIBILITY_ENEMY_COLLISION_COUNTDOWN,
     PLAYER_FIRE_ANIMATION_SPEED_INCREMENT,
@@ -37,6 +39,7 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
     )
 
     def __init__(self, player_bullet_group, enemy_group, group):
+        self.bullet_vel = PLAYER_BULLET_VEL
         self.firing = False
         self.firing_frame_time = 0
         self.player_bullet_group = player_bullet_group
@@ -75,7 +78,12 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
         if self.firing:
             return
         PLAYER_GUN_SHOT_SFX.play()
-        PlayerBullet(self.rect.midtop, self.enemy_group, self.player_bullet_group)
+        PlayerBullet(
+            self.bullet_vel,
+            self.rect.midtop,
+            self.enemy_group,
+            self.player_bullet_group,
+        )
         self.firing = True
 
     def _handle_firing_state(self):
@@ -115,7 +123,7 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
             alpha_value = (
                 ALPHA_TRANSPARENT
                 if self.invisibility_countdown % FLASH_STEP_FRAME
-                else ALPHA_MAX
+                else ALPHA_INTERMEDIATE
             )
             for sprite in self.spritesheet:
                 sprite.set_alpha(alpha_value)
@@ -135,6 +143,7 @@ class Player(movable_animated_entity.MoveableAnimatedLivingEntity):
     def update_stats(self, game_wave):
         """Update the player's stats based on the current game wave."""
         self.change_vel(PLAYER_VEL + PLAYER_VEL_INCREMENT * game_wave)
+        self.bullet_vel = PLAYER_BULLET_VEL + PLAYER_VEL_INCREMENT * game_wave
         if self.firing:
             self.change_animation_speed(
                 ANIMATION_SPEED + PLAYER_FIRE_ANIMATION_SPEED_INCREMENT * game_wave

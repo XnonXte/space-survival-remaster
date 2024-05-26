@@ -28,13 +28,18 @@ from config import (
     ENEMY_KILLED_EVENT,
     ENERGY_ORB_SFX,
     ENEMY_VEL,
-    ENEMY_VEL_INCREMENT,
     ENEMY_FIRE_ANIMATION_SPEED_INCREMENT,
     WAVE_1_ENEMY_COOLDOWN,
     WAVE_2_ENEMY_COOLDOWN,
     WAVE_3_ENEMY_COOLDOWN,
     WAVE_4_ENEMY_COOLDOWN,
     WAVE_5_ENEMY_COOLDOWN,
+    WAVE_1_MAX_ENEMY_COUNT,
+    WAVE_2_MAX_ENEMY_COUNT,
+    WAVE_3_MAX_ENEMY_COUNT,
+    WAVE_4_MAX_ENEMY_COUNT,
+    WAVE_5_MAX_ENEMY_COUNT,
+    NEW_WAVE_SFX,
 )
 
 
@@ -52,6 +57,13 @@ class Game:
 
     def _handle_wave_change(self, game_tick_seconds):
         return min(int(game_tick_seconds // WAVE_CHANGE_TIME) + 1, 5)
+
+    def _handle_new_wave(self, game_tick_seconds, enemy_group, enemy_bullet_group):
+        if game_tick_seconds < WAVE_CHANGE_TIME * 5:
+            if game_tick_seconds % WAVE_CHANGE_TIME == 0:
+                NEW_WAVE_SFX.play()
+                enemy_bullet_group.empty()
+                enemy_group.empty()
 
     def _handle_enemy_spawn(
         self,
@@ -71,9 +83,24 @@ class Game:
             4: WAVE_4_ENEMY_COOLDOWN,
             5: WAVE_5_ENEMY_COOLDOWN,
         }
-        if game_tick_seconds % wave_cooldowns[game_wave] == 0:
+        wave_max_enemy_counts = {
+            1: WAVE_1_MAX_ENEMY_COUNT,
+            2: WAVE_2_MAX_ENEMY_COUNT,
+            3: WAVE_3_MAX_ENEMY_COUNT,
+            4: WAVE_4_MAX_ENEMY_COUNT,
+            5: WAVE_5_MAX_ENEMY_COUNT,
+        }
+        enemy_sprite_only_group = [
+            enemy_sprite
+            for enemy_sprite in enemy_group
+            if enemy_sprite.__class__.__name__ == "Enemy"
+        ]  # Since we put health-bar sprite into the same group, we need to separate it with the actual enemy sprite.
+        if (
+            game_tick_seconds % wave_cooldowns[game_wave] == 0
+            and len(enemy_sprite_only_group) < wave_max_enemy_counts[game_wave]
+        ):
             Enemy(
-                ENEMY_VEL + ENEMY_VEL_INCREMENT * game_wave,
+                ENEMY_VEL,
                 ANIMATION_SPEED + ENEMY_FIRE_ANIMATION_SPEED_INCREMENT * game_wave,
                 (random_x_pos, -ENEMY_SIZE[0]),
                 enemy_bullet_group,
@@ -114,6 +141,7 @@ class Game:
     def run(self):
         # Game variables
         game_tick = 0
+        game_tick_seconds = 0
         game_wave = 1
         killed_enemies = 0
         running = True
@@ -126,10 +154,8 @@ class Game:
         health_group = pygame.sprite.Group()
         shield_group = pygame.sprite.Group()
         drop_group = pygame.sprite.Group()
-
         Background(background_group)
         player_sprite = Player(player_bullet_group, enemy_group, player_group)
-
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -174,6 +200,7 @@ class Game:
                 player_sprite,
                 enemy_group,
             )
+            self._handle_new_wave(game_tick_seconds, enemy_group, enemy_bullet_group)
             self._handle_text_rendering(
                 [
                     (

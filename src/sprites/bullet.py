@@ -3,7 +3,6 @@ import pygame
 from sprites.bases import animated_entity
 from utils import load_spritesheet, rotate_spritesheet
 from config import (
-    PLAYER_BULLET_VEL,
     ENEMY_BULLET_VEL,
     WINDOW_HEIGHT,
     PLAYER_BULLET_DAMAGE,
@@ -18,13 +17,14 @@ class PlayerBullet(animated_entity.AnimatedEntity):
         path.join("src", "assets", "graphics", "bullets", "player")
     )
 
-    def __init__(self, pos, enemy_group, group):
+    def __init__(self, vel, pos, enemy_group, group):
+        self.vel = vel
         self.enemy_group = enemy_group
         super().__init__(self.BULLET_SPRITESHEET, group, midbottom=pos)
 
     def _handle_movement(self):
         """Handle the movement of the bullet."""
-        self.rect.y -= PLAYER_BULLET_VEL
+        self.rect.y -= self.vel
         if self.rect.bottom <= 0:
             self.kill()
 

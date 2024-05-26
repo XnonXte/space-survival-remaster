@@ -1,7 +1,14 @@
 from os import path
 import pygame
 from sprites.bases import animated_entity
-from config import DROP_TIMEOUT, DROP_TYPE, HEART_DROP_SFX, SHIELD_DROP_SFX
+from config import (
+    DROP_TIMEOUT,
+    DROP_TYPE,
+    HEART_DROP_SFX,
+    SHIELD_DROP_SFX,
+    DROP_APPEAR_SFX,
+    DROP_DISAPPEAR_SFX,
+)
 from utils import load_spritesheet
 
 
@@ -16,6 +23,7 @@ class Drop(animated_entity.AnimatedEntity):
     def __init__(self, pos, drop_type, player_sprite, group):
         if drop_type not in DROP_TYPE:
             raise ValueError(f"'{drop_type}' is not a valid drop type!")
+        DROP_APPEAR_SFX.play()
         self.drop_type = drop_type
         self.player_sprite = player_sprite
         self.created_time = pygame.time.get_ticks()
@@ -38,6 +46,7 @@ class Drop(animated_entity.AnimatedEntity):
     def _handle_timeout(self):
         """Remove the drop after a certain timeout period."""
         if pygame.time.get_ticks() - self.created_time >= DROP_TIMEOUT:
+            DROP_DISAPPEAR_SFX.play()
             self.kill()
 
     def update(self):
