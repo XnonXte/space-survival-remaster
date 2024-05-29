@@ -7,7 +7,7 @@ pygame.mixer.init()
 pygame.font.init()
 
 # Important.
-FPS = 75
+FPS = 60
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 800
 ANIMATION_SPEED = 0.1
