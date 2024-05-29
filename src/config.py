@@ -11,12 +11,18 @@ FPS = 75
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 800
 ANIMATION_SPEED = 0.1
-WINDOW_CAPTION = "Space Survival Remaster"
-
-# Set display mode, caption, and no cursor.
+MAIN_MENU_CAPTION = "Main Menu"
+HISTORY_CAPTION = "Game History (S, W, EK)"
+GAME_OVER_CAPTION = "Game Over!"
 pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption(WINDOW_CAPTION)
-pygame.mouse.set_visible(False)
+pygame.display.set_icon(pygame.image.load("icon.png"))
+
+# Main menu.
+BUTTONS_SPACING = 50  # 50 pixels.
+
+# History properties.
+HISTORY_FILE_PATH = path.join("src", "history.json")
+CAPPED_HISTORY_AMOUNT = 8
 
 # Sizes.
 PLAYER_SIZE = (64, 64)

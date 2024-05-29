@@ -6,15 +6,21 @@ Do not restribute!
 
 import random
 from os import path
+from datetime import datetime
 import pygame
 from sprites.background import Background
 from sprites.player import Player
 from sprites.enemy import Enemy
 from sprites.bases.entity import Entity
-from utils import render_text_with_outline
+from utils import render_text, read_history, save_history
+from button import Button
 from config import (
     ANIMATION_SPEED,
+    BUTTONS_SPACING,
     FONT_SIZE,
+    GAME_OVER_CAPTION,
+    HISTORY_CAPTION,
+    MAIN_MENU_CAPTION,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
     ENEMY_TYPES,
@@ -40,6 +46,7 @@ from config import (
     WAVE_4_MAX_ENEMY_COUNT,
     WAVE_5_MAX_ENEMY_COUNT,
     NEW_WAVE_SFX,
+    CAPPED_HISTORY_AMOUNT,
 )
 
 
@@ -53,7 +60,7 @@ class Game:
 
     def _handle_text_rendering(self, texts):
         for text, rect_kwargs_dict in texts:
-            render_text_with_outline(DOGICA_FONT, text, **rect_kwargs_dict)
+            render_text(text, DOGICA_FONT, **rect_kwargs_dict)
 
     def _handle_wave_change(self, game_tick_seconds):
         return min(int(game_tick_seconds // WAVE_CHANGE_TIME) + 1, 5)
@@ -133,18 +140,144 @@ class Game:
             current_shield, shield_group, self.SHIELD_IMG_PATH, DROP_SIZE[1]
         )
 
-    def _handle_groups(self, *groups):
+    def _handle_groups(self, groups):
         for group in groups:
+            if not hasattr(group, "draw") and not hasattr(group, "update"):
+                raise Exception("Invalid group!")
             group.draw(self.window)
             group.update()
 
-    def run(self):
-        # Game variables
+    def _handle_buttons(self, mouse_pos, buttons):
+        for button in buttons:
+            if not hasattr(button, "change_color") and not hasattr(button, "update"):
+                raise Exception("Invalid button!")
+            button.change_color(mouse_pos)
+            button.update(self.window)
+
+    def main_menu(self):
+        pygame.display.set_caption(MAIN_MENU_CAPTION)
+        backgrond_group = pygame.sprite.GroupSingle()
+        Background(backgrond_group)
+        while True:
+            menu_mouse_pos = pygame.mouse.get_pos()
+            play_button = Button(
+                None,
+                (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - BUTTONS_SPACING),
+                "PLAY",
+                DOGICA_FONT,
+                "white",
+                "purple",
+            )
+            history_button = Button(
+                None,
+                (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2),
+                "HISTORY",
+                DOGICA_FONT,
+                "white",
+                "purple",
+            )
+            quit_button = Button(
+                None,
+                (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + BUTTONS_SPACING),
+                "QUIT",
+                DOGICA_FONT,
+                "white",
+                "red",
+            )
+            self.window.fill("black")
+            self._handle_groups([backgrond_group])
+            self._handle_buttons(
+                menu_mouse_pos, [play_button, history_button, quit_button]
+            )
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit(0)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if play_button.check_for_input(menu_mouse_pos):
+                        self.play()
+                    if history_button.check_for_input(menu_mouse_pos):
+                        self.history()
+                    if quit_button.check_for_input(menu_mouse_pos):
+                        pygame.quit()
+                        quit(0)
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+    def history(self):
+        pygame.display.set_caption(HISTORY_CAPTION)
+        background_group = pygame.sprite.GroupSingle()
+        Background(background_group)
+        sorted_history = sorted(read_history(), key=lambda h: h["created_at"])
+        capped_history = sorted_history[:CAPPED_HISTORY_AMOUNT]
+        capped_history_texts = (
+            [
+                (
+                    f"{h['score']} | {h['game_wave']} | {h['enemies_killed']} - {datetime.fromtimestamp(h['created_at']).strftime('%a %d %b, %Y')}",
+                    {
+                        "center": (
+                            WINDOW_WIDTH // 2,
+                            WINDOW_HEIGHT // 4 + BUTTONS_SPACING * count,
+                        )
+                    },
+                )
+                for count, h in enumerate(capped_history, start=1)
+            ]
+            if len(sorted_history) != 0
+            else [
+                (
+                    "You haven't played yet!",
+                    {
+                        "center": (
+                            WINDOW_WIDTH // 2,
+                            WINDOW_HEIGHT // 4
+                            + BUTTONS_SPACING * CAPPED_HISTORY_AMOUNT // 2,
+                        )
+                    },
+                )
+            ]
+        )
+        while True:
+            history_mouse_pos = pygame.mouse.get_pos()
+            back_button = Button(
+                None,
+                (
+                    WINDOW_WIDTH // 2,
+                    WINDOW_HEIGHT // 4 + BUTTONS_SPACING * CAPPED_HISTORY_AMOUNT + 1,
+                ),
+                "BACK",
+                DOGICA_FONT,
+                "white",
+                "green",
+            )
+            self.window.fill("black")
+            self._handle_groups([background_group])
+            self._handle_text_rendering(
+                [
+                    (
+                        "Game History (S, W, EK)",
+                        {"center": (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4)},
+                    ),
+                    *capped_history_texts,
+                ]
+            )
+            self._handle_buttons(history_mouse_pos, [back_button])
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit(0)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if back_button.check_for_input(history_mouse_pos):
+                        self.main_menu()
+            pygame.display.flip()
+            self.clock.tick(FPS)
+
+    def play(self):
+        # Game variables.
         game_tick = 0
         game_tick_seconds = 0
         game_wave = 1
-        killed_enemies = 0
-        running = True
+        enemies_killed = 0
 
         background_group = pygame.sprite.GroupSingle()
         player_group = pygame.sprite.Group()
@@ -156,20 +289,35 @@ class Game:
         drop_group = pygame.sprite.Group()
         Background(background_group)
         player_sprite = Player(player_bullet_group, enemy_group, player_group)
-        while running:
+        while True:
+            pygame.display.set_caption(
+                f"Score: {int(game_tick_seconds)} | Wave: {game_wave} | Enemies Killed: {enemies_killed}"
+            )
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    pygame.quit()
+                    quit(0)
                 elif event.type == ENEMY_PASSING_EVENT:
                     ENERGY_ORB_SFX.play()
                     player_sprite.update_shield(-1)
                     enemy_bullet_group.empty()
                 elif event.type == GAME_OVER_EVENT:
-                    running = False
+                    history = read_history()
+                    history.append(
+                        {
+                            "score": int(game_tick_seconds),
+                            "game_wave": game_wave,
+                            "enemies_killed": enemies_killed,
+                            "created_at": datetime.now().timestamp(),
+                        }
+                    )
+                    save_history(history)
+                    self.game_over(game_tick_seconds, game_wave, enemies_killed)
                 elif event.type == ENEMY_KILLED_EVENT:
-                    killed_enemies += 1
+                    enemies_killed += 1
 
             # Draw and update functions
+            self.window.fill("black")
             self._handle_heart_and_shield_indicator(
                 player_sprite.health_bar.current_health,
                 health_group,
@@ -177,14 +325,16 @@ class Game:
                 shield_group,
             )
             self._handle_groups(
-                background_group,
-                player_group,
-                enemy_group,
-                player_bullet_group,
-                enemy_bullet_group,
-                health_group,
-                shield_group,
-                drop_group,
+                [
+                    background_group,
+                    player_group,
+                    enemy_group,
+                    player_bullet_group,
+                    enemy_bullet_group,
+                    health_group,
+                    shield_group,
+                    drop_group,
+                ]
             )
 
             # Game logic functions
@@ -217,7 +367,7 @@ class Game:
                         },
                     ),
                     (
-                        f"{killed_enemies} Enemies Killed",
+                        f"{enemies_killed} Enemies Killed",
                         {"bottomleft": (0, WINDOW_HEIGHT)},
                     ),
                     (
@@ -230,9 +380,65 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FPS)
 
-        pygame.quit()
-        quit(0)
+    def game_over(self, game_tick_seconds, game_wave, enemies_killed):
+        pygame.display.set_caption(GAME_OVER_CAPTION)
+        background_group = pygame.sprite.GroupSingle()
+        Background(background_group)
+        while True:
+            game_over_mouse_pos = pygame.mouse.get_pos()
+            back_button = Button(
+                None,
+                (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4 + BUTTONS_SPACING * 4),
+                "BACK TO MENU",
+                DOGICA_FONT,
+                "white",
+                "green",
+            )
+            self.window.fill("black")
+            self._handle_groups([background_group])
+            self._handle_text_rendering(
+                [
+                    ("Game Over!", {"center": (WINDOW_WIDTH // 2, WINDOW_HEIGHT // 4)}),
+                    (
+                        f"Score: {int(game_tick_seconds)}",
+                        {
+                            "center": (
+                                WINDOW_WIDTH // 2,
+                                WINDOW_HEIGHT // 4 + BUTTONS_SPACING,
+                            )
+                        },
+                    ),
+                    (
+                        f"Game Wave: {game_wave}",
+                        {
+                            "center": (
+                                WINDOW_WIDTH // 2,
+                                WINDOW_HEIGHT // 4 + BUTTONS_SPACING * 2,
+                            )
+                        },
+                    ),
+                    (
+                        f"Enemies Killed: {enemies_killed}",
+                        {
+                            "center": (
+                                WINDOW_WIDTH // 2,
+                                WINDOW_HEIGHT // 4 + BUTTONS_SPACING * 3,
+                            )
+                        },
+                    ),
+                ]
+            )
+            self._handle_buttons(game_over_mouse_pos, [back_button])
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit(0)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if back_button.check_for_input(game_over_mouse_pos):
+                        self.main_menu()
+            pygame.display.flip()
+            self.clock.tick(FPS)
 
 
 if __name__ == "__main__":
-    Game().run()
+    Game().main_menu()
